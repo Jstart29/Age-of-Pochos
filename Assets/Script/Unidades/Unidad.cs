@@ -1,38 +1,45 @@
 // Unidad.cs (Clase Base)
 using UnityEngine;
-using UnityEngine.AI;
-using System.Collections.Generic;
+using UnityEngine.AI; // Necesario para NavMeshAgent
+using System.Collections.Generic; // Necesario para List
 
 public class Unidad : MonoBehaviour
 {
+    // --- VARIABLES DE INSTANCIA (Protegidas para herencia, configurables en el Inspector o por clases hijas) ---
     [Header("Estadísticas Base de Unidad")]
     public float velocidadMovimiento = 3.5f;
-    public float velocidadAngular = 120f;
+    public float velocidadAngular = 120f; // Usada por NavMeshAgent y potencialmente por MirarHacia
     public float vidaMaxima = 100f;
-    [HideInInspector] public float vidaActual;
-    public int equipoID = 1;
+    [HideInInspector] public float vidaActual; // Oculto en Inspector porque se inicializa en Awake
+    public int equipoID = 1; // 1 para equipo del jugador, 2+ para enemigos u otros equipos
 
     [Header("Selección Visual")]
-    public GameObject indicadorSeleccion;
+    public GameObject indicadorSeleccion; // GameObject hijo que se activa/desactiva al seleccionar
     [HideInInspector] public bool estaSeleccionada = false;
 
     protected NavMeshAgent navMeshAgent;
 
+    // --- VARIABLES Y MÉTODOS ESTÁTICOS (Para gestión global) ---
     public static List<Unidad> unidadesSeleccionadas = new List<Unidad>();
     public static List<Unidad> todasLasUnidadesActivas = new List<Unidad>();
+    public static List<NodoDeRecurso> todosLosNodosDeRecurso = new List<NodoDeRecurso>(); // Para que los trabajadores los encuentren
 
+    // Referencias globales asignadas por ControladorInputGlobal.cs
     public static Camera camaraPrincipal;
     public static LayerMask capaSuelo;
     public static LayerMask capaUnidades;
-    public static int equipoDelJugador = 1;
+    public static LayerMask capaNodosRecursos; // Para interactuar con nodos de recursos
+    public static int equipoDelJugador = 1; // ID del equipo que el jugador controla
 
+    // Estado para la selección por caja (drag selection)
     public static bool estaArrastrandoCaja = false;
     public static Vector2 posicionInicioArrastreCaja;
-    protected static float umbralMinimoArrastreSqr = 5f * 5f;
+    protected static float umbralMinimoArrastreSqr = 5f * 5f; // Umbral (al cuadrado) para diferenciar clic de arrastre
 
-    // Inicializa componentes, estadísticas y registra la unidad en la lista de unidades activas.
+    // --- MÉTODOS DE CICLO DE VIDA DE UNITY (Virtuales para ser extendidos) ---
     protected virtual void Awake()
     {
+        // Debug.Log($"--- UNIDAD AWAKE: {gameObject.name} --- INICIO AWAKE");
         navMeshAgent = GetComponent<NavMeshAgent>();
         if (navMeshAgent != null)
         {
@@ -54,11 +61,12 @@ public class Unidad : MonoBehaviour
         {
             todasLasUnidadesActivas.Add(this);
         }
+        // Debug.Log($"--- UNIDAD AWAKE: {gameObject.name} --- FIN AWAKE. Vida: {vidaActual}");
     }
 
-    // Elimina la unidad de las listas globales de selección y unidades activas al ser destruida.
     protected virtual void OnDestroy()
     {
+        // Debug.Log($"--- UNIDAD ONDESTROY: {gameObject.name} ---");
         if (todasLasUnidadesActivas.Contains(this))
         {
             todasLasUnidadesActivas.Remove(this);
@@ -69,16 +77,16 @@ public class Unidad : MonoBehaviour
         }
     }
 
-    // Actualiza el estado visual del indicador de selección de la unidad.
     public virtual void Update()
     {
+        // Debug.Log($"--- UNIDAD UPDATE: {gameObject.name} ---"); // Puede ser muy verboso
         if (indicadorSeleccion != null)
         {
             indicadorSeleccion.SetActive(estaSeleccionada);
         }
     }
 
-    // Mueve la unidad a una posición destino utilizando el NavMeshAgent.
+    // --- MÉTODOS DE ACCIÓN DE UNIDAD (Virtuales) ---
     public virtual void MoverA(Vector3 destino)
     {
         if (navMeshAgent != null && navMeshAgent.isActiveAndEnabled && navMeshAgent.isOnNavMesh)
@@ -87,12 +95,12 @@ public class Unidad : MonoBehaviour
         }
     }
 
-    // Aplica daño a la unidad y maneja su muerte si la vida llega a cero.
     public virtual void RecibirDano(float cantidad)
     {
         if (vidaActual <= 0) return;
 
         vidaActual -= cantidad;
+        // Debug.Log($"{gameObject.name} (Equipo {equipoID}) recibió {cantidad} de daño. Vida restante: {vidaActual}");
         if (vidaActual <= 0)
         {
             vidaActual = 0;
@@ -100,50 +108,47 @@ public class Unidad : MonoBehaviour
         }
     }
 
-    // Gestiona la muerte de la unidad, destruyendo su GameObject.
     protected virtual void Morir()
     {
+        // Debug.Log($"{gameObject.name} (Equipo {equipoID}) ha muerto. Destruyendo objeto.");
         Destroy(gameObject);
     }
 
-    // Método base para atacar a una unidad objetivo (debe ser sobrescrito por clases hijas).
     public virtual void Atacar(Unidad objetivo)
     {
-        Debug.LogWarning($"{gameObject.name} (Clase Unidad Base) no tiene un método de ataque específico implementado. Objetivo: {objetivo?.name}");
+        Debug.LogWarning($"{gameObject.name} (Clase Unidad Base) no tiene un método 'Atacar' específico implementado. Objetivo: {objetivo?.name}");
     }
 
-    // Método base para usar una habilidad especial (debe ser sobrescrito por clases hijas).
+    public virtual void ComandoInteraccionNodoRecurso(NodoDeRecurso nodo)
+    {
+        Debug.LogWarning($"{gameObject.name} (Clase Unidad Base) no sabe cómo interactuar con nodos de recurso. Nodo: {nodo?.name}");
+        // Comportamiento base podría ser moverse al nodo:
+        // if (nodo != null) MoverA(nodo.transform.position);
+    }
+
     public virtual void UsarHabilidadEspecial(int numeroHabilidad, Unidad objetivoUnidad = null, Vector3 posicionObjetivoSuelo = default)
     {
         Debug.LogWarning($"{gameObject.name} (Clase Unidad Base) no tiene una habilidad especial N°{numeroHabilidad} implementada.");
     }
 
-    // Marca esta unidad como seleccionada.
-    public void SeleccionarEstaUnidad()
-    {
-        estaSeleccionada = true;
-    }
+    // --- MÉTODOS PARA GESTIONAR EL ESTADO DE SELECCIÓN (individual) ---
+    public void SeleccionarEstaUnidad() { estaSeleccionada = true; }
+    public void DeseleccionarEstaUnidad() { estaSeleccionada = false; }
 
-    // Quita la marca de selección de esta unidad.
-    public void DeseleccionarEstaUnidad()
-    {
-        estaSeleccionada = false;
-    }
 
-    // Procesa las entradas del jugador para la selección de unidades, comandos de movimiento, ataque y habilidades.
+    // --- MÉTODOS ESTÁTICOS (Lógica de Control Global para Selección e Input) ---
     public static void ProcesarInputGlobal()
     {
-        if (camaraPrincipal == null)
-        {
-            return;
-        }
+        if (camaraPrincipal == null) return;
 
+        // Inicio de Selección por Clic o Arrastre
         if (Input.GetMouseButtonDown(0))
         {
             estaArrastrandoCaja = true;
             posicionInicioArrastreCaja = Input.mousePosition;
         }
 
+        // Fin de Selección por Clic o Arrastre
         if (Input.GetMouseButtonUp(0))
         {
             if (estaArrastrandoCaja)
@@ -151,94 +156,95 @@ public class Unidad : MonoBehaviour
                 Vector2 posicionFinArrastre = Input.mousePosition;
                 float distanciaSqr = (posicionInicioArrastreCaja - posicionFinArrastre).sqrMagnitude;
                 bool fueClicSimple = distanciaSqr < umbralMinimoArrastreSqr;
-
                 estaArrastrandoCaja = false;
+                bool shiftPresionado = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                Ray rayo = camaraPrincipal.ScreenPointToRay(posicionFinArrastre);
+                RaycastHit hitInfo;
 
                 if (fueClicSimple)
                 {
-                    bool shiftPresionado = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-                    Ray rayo = camaraPrincipal.ScreenPointToRay(posicionFinArrastre);
-                    RaycastHit hitInfo;
-
+                    // Raycast para unidades (prioridad si se clickea una unidad)
                     if (Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaUnidades))
                     {
                         Unidad unidadClickeada = hitInfo.collider.GetComponent<Unidad>();
                         if (unidadClickeada != null && unidadClickeada.equipoID == equipoDelJugador)
                         {
-                            if (!shiftPresionado)
-                            {
-                                DeseleccionarTodasLasUnidadesStatic();
-                                SeleccionarUnidadStatic(unidadClickeada);
-                            }
-                            else
-                            {
-                                if (!unidadesSeleccionadas.Contains(unidadClickeada)) { SeleccionarUnidadStatic(unidadClickeada); }
-                                else { DeseleccionarUnidadStatic(unidadClickeada); }
-                            }
+                            if (!shiftPresionado) { DeseleccionarTodasLasUnidadesStatic(); SeleccionarUnidadStatic(unidadClickeada); }
+                            else { if (!unidadesSeleccionadas.Contains(unidadClickeada)) { SeleccionarUnidadStatic(unidadClickeada); } else { DeseleccionarUnidadStatic(unidadClickeada); } }
                         }
+                        // Si se clickea una unidad enemiga o no seleccionable, no hacer nada aquí (el clic derecho se encarga de atacar)
                     }
-                    else if (!shiftPresionado)
-                    {
-                        if (Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaSuelo))
-                        {
-                            DeseleccionarTodasLasUnidadesStatic();
-                        }
-                    }
-                }
-                else
-                {
-                    Rect rectSeleccion = ObtenerRectanguloDePantalla(posicionInicioArrastreCaja, posicionFinArrastre);
-                    bool shiftPresionado = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-
-                    if (!shiftPresionado)
+                    // Si no se golpeó una unidad, y no se mantiene Shift, y se golpea el suelo -> deseleccionar
+                    else if (!shiftPresionado && Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaSuelo))
                     {
                         DeseleccionarTodasLasUnidadesStatic();
                     }
-
+                }
+                else // Selección por Caja (Arrastre)
+                {
+                    Rect rectSeleccion = ObtenerRectanguloDePantalla(posicionInicioArrastreCaja, posicionFinArrastre);
+                    if (!shiftPresionado) { DeseleccionarTodasLasUnidadesStatic(); }
                     foreach (Unidad unidadEnJuego in todasLasUnidadesActivas)
                     {
                         if (unidadEnJuego != null && unidadEnJuego.equipoID == equipoDelJugador)
                         {
                             Vector3 posUnidadEnPantalla = camaraPrincipal.WorldToScreenPoint(unidadEnJuego.transform.position);
-                            if (posUnidadEnPantalla.z > 0 &&
-                                rectSeleccion.Contains(new Vector2(posUnidadEnPantalla.x, Screen.height - posUnidadEnPantalla.y), true))
-                            {
-                                SeleccionarUnidadStatic(unidadEnJuego);
-                            }
+                            if (posUnidadEnPantalla.z > 0 && rectSeleccion.Contains(new Vector2(posUnidadEnPantalla.x, Screen.height - posUnidadEnPantalla.y), true))
+                            { SeleccionarUnidadStatic(unidadEnJuego); }
                         }
                     }
                 }
             }
         }
 
+        // Órdenes de Clic Derecho
         if (Input.GetMouseButtonDown(1) && unidadesSeleccionadas.Count > 0)
         {
             Ray rayo = camaraPrincipal.ScreenPointToRay(Input.mousePosition);
             RaycastHit hitInfo;
 
-            if (Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaUnidades))
+            // Prioridad 1: ¿Clic en un Nodo de Recurso?
+            if (Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaNodosRecursos))
             {
-                Unidad unidadObjetivo = hitInfo.collider.GetComponent<Unidad>();
-                if (unidadObjetivo != null && unidadObjetivo.equipoID != equipoDelJugador)
+                NodoDeRecurso nodoDetectado = hitInfo.collider.GetComponent<NodoDeRecurso>();
+                if (nodoDetectado != null && nodoDetectado.CantidadActual > 0) // Asegurarse que el nodo tenga recursos
                 {
+                    // Debug.Log($"Input: Comando INTERACTUAR con NodoDeRecurso {nodoDetectado.name}");
                     foreach (Unidad uSeleccionada in unidadesSeleccionadas)
                     {
-                        if (unidadObjetivo.equipoID != uSeleccionada.equipoID)
-                        {
-                            uSeleccionada.Atacar(unidadObjetivo);
-                        }
+                        uSeleccionada.ComandoInteraccionNodoRecurso(nodoDetectado);
                     }
                     return;
                 }
             }
 
+            // Prioridad 2: ¿Clic en una unidad enemiga?
+            if (Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaUnidades))
+            {
+                Unidad unidadObjetivo = hitInfo.collider.GetComponent<Unidad>();
+                if (unidadObjetivo != null && unidadObjetivo.equipoID != equipoDelJugador)
+                {
+                    // Debug.Log($"Input: Comando ATACAR a {unidadObjetivo.name}");
+                    foreach (Unidad uSeleccionada in unidadesSeleccionadas)
+                    {
+                        if (unidadObjetivo.equipoID != uSeleccionada.equipoID) uSeleccionada.Atacar(unidadObjetivo);
+                    }
+                    return;
+                }
+                // Si es unidad aliada, se podría implementar un "seguir" o "proteger" aquí,
+                // o simplemente dejar que pase a la lógica de mover al suelo.
+            }
+
+            // Prioridad 3: ¿Clic en el suelo?
             if (Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaSuelo))
             {
+                // Debug.Log($"Input: Comando MOVER a {hitInfo.point}");
                 MoverUnidadesSeleccionadas(hitInfo.point);
                 return;
             }
         }
 
+        // Habilidad Especial (ej. Tecla 'Q' + Clic Izquierdo)
         if (Input.GetKeyDown(KeyCode.Q) && Input.GetMouseButtonDown(0) && unidadesSeleccionadas.Count > 0)
         {
             Ray rayo = camaraPrincipal.ScreenPointToRay(Input.mousePosition);
@@ -247,12 +253,18 @@ public class Unidad : MonoBehaviour
             Vector3 posicionHabilidadObjetivo = default;
             bool objetivoHabilidadEncontrado = false;
 
+            // Priorizar objetivo de unidad para la habilidad
             if (Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaUnidades))
             {
                 unidadHabilidadObjetivo = hitInfo.collider.GetComponent<Unidad>();
-                if (unidadHabilidadObjetivo != null) { objetivoHabilidadEncontrado = true; }
+                if (unidadHabilidadObjetivo != null)
+                {
+                    posicionHabilidadObjetivo = unidadHabilidadObjetivo.transform.position; // Usar posición de la unidad como fallback
+                    objetivoHabilidadEncontrado = true;
+                }
             }
-            else if (Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaSuelo))
+            // Si no se golpeó una unidad, verificar si se golpeó el suelo
+            if (!objetivoHabilidadEncontrado && Physics.Raycast(rayo, out hitInfo, Mathf.Infinity, capaSuelo))
             {
                 posicionHabilidadObjetivo = hitInfo.point;
                 objetivoHabilidadEncontrado = true;
@@ -260,6 +272,7 @@ public class Unidad : MonoBehaviour
 
             if (objetivoHabilidadEncontrado)
             {
+                // Debug.Log($"Input: Comando HABILIDAD (0) sobre {(unidadHabilidadObjetivo != null ? unidadHabilidadObjetivo.name : posicionHabilidadObjetivo.ToString())}");
                 foreach (Unidad uSeleccionada in unidadesSeleccionadas)
                 {
                     uSeleccionada.UsarHabilidadEspecial(0, unidadHabilidadObjetivo, posicionHabilidadObjetivo);
@@ -268,18 +281,14 @@ public class Unidad : MonoBehaviour
         }
     }
 
-    // Añade una unidad a la lista de unidades seleccionadas y actualiza su estado.
+    // --- Métodos Estáticos Protegidos para Gestión de Selección ---
     protected static void SeleccionarUnidadStatic(Unidad unidad)
     {
-        if (unidad == null) return;
-        if (unidad.equipoID != equipoDelJugador) return;
-        if (unidadesSeleccionadas.Contains(unidad)) return;
-
+        if (unidad == null || unidad.equipoID != equipoDelJugador || unidadesSeleccionadas.Contains(unidad)) return;
         unidadesSeleccionadas.Add(unidad);
         unidad.SeleccionarEstaUnidad();
     }
 
-    // Elimina una unidad de la lista de unidades seleccionadas y actualiza su estado.
     protected static void DeseleccionarUnidadStatic(Unidad unidad)
     {
         if (unidad != null && unidadesSeleccionadas.Contains(unidad))
@@ -289,31 +298,23 @@ public class Unidad : MonoBehaviour
         }
     }
 
-    // Elimina todas las unidades de la lista de selección y actualiza su estado.
     protected static void DeseleccionarTodasLasUnidadesStatic()
     {
         if (unidadesSeleccionadas.Count == 0) return;
-        foreach (Unidad u in new List<Unidad>(unidadesSeleccionadas))
-        {
-            if (u != null) u.DeseleccionarEstaUnidad();
-        }
+        foreach (Unidad u in new List<Unidad>(unidadesSeleccionadas)) { if (u != null) u.DeseleccionarEstaUnidad(); }
         unidadesSeleccionadas.Clear();
     }
 
-    // Mueve las unidades seleccionadas a un punto destino, aplicando una lógica simple de formación.
+    // --- Método Estático Protegido para Mover Grupo ---
     protected static void MoverUnidadesSeleccionadas(Vector3 centroDestino)
     {
         int count = unidadesSeleccionadas.Count;
         if (count == 0) return;
 
         float espaciado = 2.0f;
-        Vector3 direccionFormacion = camaraPrincipal.transform.right;
+        Vector3 direccionFormacion = camaraPrincipal != null ? camaraPrincipal.transform.right : Vector3.right;
 
-        if (count == 1 && unidadesSeleccionadas[0] != null)
-        {
-            unidadesSeleccionadas[0].MoverA(centroDestino);
-            return;
-        }
+        if (count == 1 && unidadesSeleccionadas[0] != null) { unidadesSeleccionadas[0].MoverA(centroDestino); return; }
 
         Vector3 inicioFormacion = centroDestino - direccionFormacion * (espaciado * (count - 1) / 2f);
         for (int i = 0; i < count; i++)
@@ -323,28 +324,19 @@ public class Unidad : MonoBehaviour
                 Vector3 posicionUnidadEnFormacion = inicioFormacion + direccionFormacion * (i * espaciado);
                 NavMeshHit navHit;
                 if (NavMesh.SamplePosition(posicionUnidadEnFormacion, out navHit, espaciado, NavMesh.AllAreas))
-                {
-                    unidadesSeleccionadas[i].MoverA(navHit.position);
-                }
-                else
-                {
-                    unidadesSeleccionadas[i].MoverA(centroDestino);
-                }
+                { unidadesSeleccionadas[i].MoverA(navHit.position); }
+                else { unidadesSeleccionadas[i].MoverA(centroDestino); }
             }
         }
     }
 
-    // Convierte las coordenadas del mouse a un rectángulo en coordenadas GUI para la caja de selección.
+    // --- Helper Estático para Rectángulo de Selección ---
     public static Rect ObtenerRectanguloDePantalla(Vector2 p1Mouse, Vector2 p2Mouse)
     {
         Vector2 p1GUI = new Vector2(p1Mouse.x, Screen.height - p1Mouse.y);
         Vector2 p2GUI = new Vector2(p2Mouse.x, Screen.height - p2Mouse.y);
-
-        float xMin = Mathf.Min(p1GUI.x, p2GUI.x);
-        float xMax = Mathf.Max(p1GUI.x, p2GUI.x);
-        float yMin = Mathf.Min(p1GUI.y, p2GUI.y);
-        float yMax = Mathf.Max(p1GUI.y, p2GUI.y);
-
+        float xMin = Mathf.Min(p1GUI.x, p2GUI.x); float xMax = Mathf.Max(p1GUI.x, p2GUI.x);
+        float yMin = Mathf.Min(p1GUI.y, p2GUI.y); float yMax = Mathf.Max(p1GUI.y, p2GUI.y);
         return new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
     }
 }

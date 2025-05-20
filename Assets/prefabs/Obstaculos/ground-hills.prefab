@@ -64,6 +64,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 17507eef55da5c84ebc5ee22b32fcdec, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1adc7e3a1a17d5c41861fadeca480604, type: 2}
     - target: {fileID: 919132149155446097, guid: 17507eef55da5c84ebc5ee22b32fcdec, type: 3}
       propertyPath: m_Name
       value: ground-hills
@@ -77,10 +81,10 @@ PrefabInstance:
       addedObject: {fileID: 4573401649982293470}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 17507eef55da5c84ebc5ee22b32fcdec, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 434862313358712836}
+      addedObject: {fileID: 5899871500797701512}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 17507eef55da5c84ebc5ee22b32fcdec, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5899871500797701512}
+      addedObject: {fileID: 8079746091058728555}
   m_SourcePrefab: {fileID: 100100000, guid: 17507eef55da5c84ebc5ee22b32fcdec, type: 3}
 --- !u!1 &5508108770846528620 stripped
 GameObject:
@@ -109,22 +113,6 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: -7341658922661344165, guid: 17507eef55da5c84ebc5ee22b32fcdec, type: 3}
---- !u!208 &434862313358712836
-NavMeshObstacle:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5508108770846528620}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Shape: 1
-  m_Extents: {x: 0.5, y: 0.14400001, z: 0.5}
-  m_MoveThreshold: 0.1
-  m_Carve: 0
-  m_CarveOnlyStationary: 1
-  m_Center: {x: 0, y: 0.14400001, z: 0}
-  m_TimeToStationary: 0.5
 --- !u!54 &5899871500797701512
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -152,3 +140,22 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 112
   m_CollisionDetection: 0
+--- !u!114 &8079746091058728555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5508108770846528620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 821bbcbd9a64e474989693507ee1c399, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tipoDeRecurso: 0
+  cantidadInicial: 100
+  cantidadPorExtraccion: 10
+  esAgotable: 1
+  cantidadActual: 0
+  modeloVisualNormal: {fileID: 0}
+  modeloVisualAgotado: {fileID: 0}
