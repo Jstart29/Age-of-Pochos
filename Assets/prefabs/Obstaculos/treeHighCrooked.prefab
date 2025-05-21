@@ -112,7 +112,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 112
+  m_Constraints: 122
   m_CollisionDetection: 0
 --- !u!208 &9159859795875851731
 NavMeshObstacle:
@@ -124,7 +124,7 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 1
-  m_Extents: {x: 0.11, y: 1.3750001, z: 0.12}
+  m_Extents: {x: 0.25, y: 1.3750001, z: 0.25}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 1

@@ -97,13 +97,20 @@ public class Unidad : MonoBehaviour
 
     public virtual void RecibirDano(float cantidad)
     {
-        if (vidaActual <= 0) return;
+        Debug.Log($"[UNIDAD BASE] {gameObject.name} (Equipo {equipoID}) - RecibirDano LLAMADO. Vida ANTES: {vidaActual}, Daño bruto: {cantidad}");
+        if (vidaActual <= 0)
+        {
+            Debug.Log($"[UNIDAD BASE] {gameObject.name} ya está muerta/destruida. No se aplica más daño.");
+            return;
+        }
 
-        vidaActual -= cantidad;
-        // Debug.Log($"{gameObject.name} (Equipo {equipoID}) recibió {cantidad} de daño. Vida restante: {vidaActual}");
+        vidaActual -= cantidad; // ¡AQUÍ ES DONDE LA VIDA DEBERÍA BAJAR!
+        Debug.Log($"[UNIDAD BASE] {gameObject.name} - Vida DESPUÉS de restar daño: {vidaActual}. (Cantidad restada: {cantidad})");
+
         if (vidaActual <= 0)
         {
             vidaActual = 0;
+            Debug.Log($"[UNIDAD BASE] {gameObject.name} - Vida llegó a 0 o menos. Llamando a Morir().");
             Morir();
         }
     }

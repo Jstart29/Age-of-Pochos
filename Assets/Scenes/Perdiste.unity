@@ -206,6 +206,7 @@ GameObject:
   - component: {fileID: 168396048}
   - component: {fileID: 168396047}
   - component: {fileID: 168396046}
+  - component: {fileID: 168396050}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -299,50 +300,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!1 &262844433
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 262844435}
-  - component: {fileID: 262844434}
-  m_Layer: 0
-  m_Name: cambio
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &262844434
+--- !u!114 &168396050
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 262844433}
+  m_GameObject: {fileID: 168396045}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 051c6ab1dfaa54944b989fdf33d75650, type: 3}
+  m_Script: {fileID: 11500000, guid: 643bc0adf9327894d95e9dc2bbd3cd0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!4 &262844435
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 262844433}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2960.9382, y: 1077.9021, z: -96.106674}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &336482764
 GameObject:
   m_ObjectHideFlags: 0
@@ -629,7 +598,7 @@ GameObject:
   - component: {fileID: 592870232}
   - component: {fileID: 592870231}
   m_Layer: 5
-  m_Name: Button (1)
+  m_Name: Button_Salir
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -699,8 +668,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 262844434}
-        m_TargetAssemblyTypeName: GestorDeEscena, Assembly-CSharp
+      - m_Target: {fileID: 168396050}
+        m_TargetAssemblyTypeName: ControladorNavegacionUI, Assembly-CSharp
         m_MethodName: SalirDelJuego
         m_Mode: 1
         m_Arguments:
@@ -962,7 +931,7 @@ GameObject:
   - component: {fileID: 1539340863}
   - component: {fileID: 1539340862}
   m_Layer: 5
-  m_Name: Button
+  m_Name: Button_Menu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1032,16 +1001,16 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 262844434}
-        m_TargetAssemblyTypeName: GestorDeEscena, Assembly-CSharp
-        m_MethodName: CambiarEscena
+      - m_Target: {fileID: 168396050}
+        m_TargetAssemblyTypeName: ControladorNavegacionUI, Assembly-CSharp
+        m_MethodName: CargarEscenaPorNombre
         m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: inicio
+          m_StringArgument: Inicio
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &1539340863
@@ -1094,7 +1063,7 @@ GameObject:
   - component: {fileID: 1937518109}
   - component: {fileID: 1937518108}
   m_Layer: 5
-  m_Name: Winner
+  m_Name: Texto PERDISTE
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1364,4 +1333,3 @@ SceneRoots:
   - {fileID: 1094360821}
   - {fileID: 168396049}
   - {fileID: 845252037}
-  - {fileID: 262844435}

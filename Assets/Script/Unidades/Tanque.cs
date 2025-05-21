@@ -1,3 +1,4 @@
+// Tanque.cs
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -18,11 +19,9 @@ public class Tanque : Unidad
     private float proximoTiempoBusquedaEnemigo = 0f;
     private float intervaloBusquedaEnemigo = 1.0f;
 
-    // Inicializa las estadísticas y componentes específicos del Tanque al ser creado.
     protected override void Awake()
     {
         base.Awake();
-
         vidaMaxima = 400f;
         vidaActual = vidaMaxima;
         velocidadMovimiento = 1.8f;
@@ -32,7 +31,6 @@ public class Tanque : Unidad
         }
     }
 
-    // Gestiona la lógica de ataque, movimiento hacia el objetivo y búsqueda automática de enemigos en cada frame.
     public override void Update()
     {
         base.Update();
@@ -43,11 +41,7 @@ public class Tanque : Unidad
             {
                 objetivoAtaqueActual = null;
                 if (navMeshAgent != null && navMeshAgent.hasPath) navMeshAgent.ResetPath();
-
-                if (puedeAgredirAutomaticamente)
-                {
-                    BuscarSiguienteEnemigoMasCercano();
-                }
+                if (puedeAgredirAutomaticamente) BuscarSiguienteEnemigoMasCercano();
             }
             else
             {
@@ -60,7 +54,6 @@ public class Tanque : Unidad
                 {
                     if (navMeshAgent != null && navMeshAgent.hasPath) navMeshAgent.ResetPath();
                     MirarHacia(objetivoAtaqueActual.transform.position);
-
                     if (Time.time >= proximoTiempoAtaque)
                     {
                         RealizarAtaqueSimple(objetivoAtaqueActual);
@@ -78,11 +71,9 @@ public class Tanque : Unidad
         }
     }
 
-    // Orienta al Tanque para que mire hacia un punto específico en el espacio.
     protected void MirarHacia(Vector3 punto)
     {
         if (navMeshAgent == null) return;
-
         if (!navMeshAgent.updateRotation || navMeshAgent.velocity.sqrMagnitude < 0.01f)
         {
             Vector3 direccion = (punto - transform.position).normalized;
@@ -94,7 +85,6 @@ public class Tanque : Unidad
         }
     }
 
-    // Establece una unidad enemiga como el objetivo de ataque actual del Tanque.
     public override void Atacar(Unidad objetivo)
     {
         if (objetivo != null && objetivo.vidaActual > 0 && objetivo.equipoID != this.equipoID)
@@ -103,23 +93,17 @@ public class Tanque : Unidad
         }
         else
         {
-            if (objetivoAtaqueActual == objetivo)
-            {
-                objetivoAtaqueActual = null;
-            }
+            if (objetivoAtaqueActual == objetivo) objetivoAtaqueActual = null;
         }
     }
 
-    // Ejecuta la acción de ataque contra la unidad objetivo especificada.
     private void RealizarAtaqueSimple(Unidad objetivo)
     {
         if (objetivo == null || objetivo.vidaActual <= 0) return;
-
         objetivo.RecibirDano(danoAtaqueTanque);
         proximoTiempoAtaque = Time.time + cooldownAtaqueTanque;
     }
 
-    // Procesa el daño recibido por el Tanque, aplicando la reducción por armadura.
     public override void RecibirDano(float cantidad)
     {
         float danoReducido = Mathf.Max(0, cantidad - armaduraTanque);
@@ -131,18 +115,15 @@ public class Tanque : Unidad
         }
     }
 
-    // Maneja la lógica de destrucción del Tanque cuando su vida llega a cero.
     protected override void Morir()
     {
         objetivoAtaqueActual = null;
         base.Morir();
     }
 
-    // Busca y asigna automáticamente la unidad enemiga más cercana dentro del rango de agresión.
     protected virtual void BuscarSiguienteEnemigoMasCercano()
     {
         if (navMeshAgent == null) return;
-
         Unidad enemigoMasCercanoEncontrado = null;
         float menorDistanciaSqr = maxDistanciaAgresionTanque * maxDistanciaAgresionTanque;
 
@@ -158,7 +139,6 @@ public class Tanque : Unidad
                 }
             }
         }
-
         if (enemigoMasCercanoEncontrado != null)
         {
             Atacar(enemigoMasCercanoEncontrado);

@@ -27,16 +27,9 @@ public class Mago : Unidad
     private float proximoTiempoBusquedaEnemigo = 0f;
     private float intervaloBusquedaEnemigo = 1.0f;
 
-    [Header("Comportamiento de Ataque")]
-    public float distanciaRetroceso = 0.5f; // Actualmente no se usa en la lógica activa del Mago
-    public float duracionRetroceso = 0.2f; // Actualmente no se usa en la lógica activa del Mago
-    private bool estaRetrocediendo = false; // Actualmente no se usa en la lógica activa del Mago
-
-    // Inicializa las estadísticas, componentes y referencias del Mago al ser creado.
     protected override void Awake()
     {
         base.Awake();
-
         vidaMaxima = 80f;
         manaActual = manaMaximo;
         vidaActual = vidaMaxima;
@@ -52,24 +45,17 @@ public class Mago : Unidad
             if (puntoDeDisparo == null)
             {
                 puntoDeDisparo = transform;
-                Debug.LogWarning($"Mago {gameObject.name}: 'PuntoDeDisparo' no encontrado como hijo o no asignado. Usando la posición del Mago.", this);
             }
         }
         if (proyectilAoEPrefab == null)
         {
-            Debug.LogError($"Mago {gameObject.name}: ¡'Proyectil AoE Prefab' no está asignado en el Inspector!", this);
+            Debug.LogError($"Mago {gameObject.name}: ¡'Proyectil AoE Prefab' no está asignado!", this);
         }
     }
 
-    // Gestiona la regeneración de maná, lógica de ataque, movimiento y búsqueda de enemigos en cada frame.
     public override void Update()
     {
         base.Update();
-
-        if (estaRetrocediendo) // Aunque la variable existe, la lógica de retroceso no está implementada.
-        {
-            return;
-        }
 
         if (manaActual < manaMaximo)
         {
@@ -132,7 +118,6 @@ public class Mago : Unidad
         }
     }
 
-    // Orienta al Mago para que mire hacia un punto específico en el espacio.
     protected void MirarHacia(Vector3 punto)
     {
         if (navMeshAgent == null) return;
@@ -147,16 +132,12 @@ public class Mago : Unidad
         }
     }
 
-    // Establece una unidad enemiga como el objetivo de ataque actual del Mago.
     public override void Atacar(Unidad objetivo)
     {
-        if (estaRetrocediendo) return;
-
         if (objetivo != null && objetivo.equipoID != this.equipoID && objetivo.vidaActual > 0)
         {
             objetivoAtaqueActual = objetivo;
             puntoObjetivoAtaqueSuelo = null;
-            if (navMeshAgent != null) navMeshAgent.speed = velocidadMovimiento;
         }
         else
         {
@@ -164,37 +145,6 @@ public class Mago : Unidad
         }
     }
 
-    // Placeholder para una lógica de ataque cuerpo a cuerpo (actualmente no utilizado por el Mago).
-    private void RealizarAtaqueMelee(Unidad objetivo)
-    {
-        // (Sin implementación activa)
-    }
-
-    // Placeholder para una corrutina de retroceso tras un ataque (actualmente no utilizado por el Mago).
-    private IEnumerator RetrocederTrasAtaqueCoroutine(Vector3 posicionDelObjetivoAlAtacar)
-    {
-        // (Sin implementación activa más allá de permitir que la corrutina finalice)
-        yield return null;
-    }
-
-    // Procesa el daño recibido por el Mago, reduciendo su vida actual.
-    public override void RecibirDano(float cantidad)
-    {
-        vidaActual -= cantidad;
-        if (vidaActual <= 0) { vidaActual = 0; Morir(); }
-    }
-
-    // Maneja la lógica de destrucción del Mago cuando su vida llega a cero.
-    protected override void Morir()
-    {
-        StopAllCoroutines();
-        objetivoAtaqueActual = null;
-        puntoObjetivoAtaqueSuelo = null;
-        estaRetrocediendo = false; // Se resetea aunque la lógica principal de retroceso no esté activa.
-        base.Morir();
-    }
-
-    // Intenta usar una habilidad especial, primariamente el ataque de área si es la habilidad número 0.
     public override void UsarHabilidadEspecial(int numeroHabilidad, Unidad objetivoUnidad = null, Vector3 posicionObjetivoSuelo = default)
     {
         if (numeroHabilidad == 0)
@@ -227,7 +177,6 @@ public class Mago : Unidad
         else base.UsarHabilidadEspecial(numeroHabilidad, objetivoUnidad, posicionObjetivoSuelo);
     }
 
-    // Lanza el proyectil de ataque de área hacia el punto objetivo especificado.
     private void LanzarAtaqueArea(Vector3 puntoObjetivoTierra)
     {
         if (proyectilAoEPrefab == null || puntoDeDisparo == null) return;
@@ -248,7 +197,19 @@ public class Mago : Unidad
         }
     }
 
-    // Busca y asigna automáticamente la unidad enemiga más cercana, priorizando unidades no-Mago.
+    public override void RecibirDano(float cantidad)
+    {
+        vidaActual -= cantidad;
+        if (vidaActual <= 0) { vidaActual = 0; Morir(); }
+    }
+
+    protected override void Morir()
+    {
+        objetivoAtaqueActual = null;
+        puntoObjetivoAtaqueSuelo = null;
+        base.Morir();
+    }
+
     protected virtual void BuscarSiguienteEnemigoMasCercanoParaAoE()
     {
         if (navMeshAgent == null) return;

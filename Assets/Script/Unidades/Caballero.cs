@@ -1,17 +1,17 @@
-// Caballero.cs
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
-using System.Collections.Generic;
 
 public class Caballero : Unidad
 {
+    [Header("Estadísticas de Caballero")]
     public float armadura = 5f;
     public float danoAtaqueCaballero = 15f;
     public float rangoAtaqueCaballero = 2.5f;
     public float cooldownAtaque = 1.5f;
     private float proximoTiempoAtaque = 0f;
 
+    [Header("Habilidad de Carga")]
     public float velocidadCarga = 8f;
     public float duracionBoostVelocidadCarga = 1f;
     public float danoCarga = 25f;
@@ -19,20 +19,19 @@ public class Caballero : Unidad
     private float proximoTiempoCarga = 0f;
     private bool estaCargando = false;
 
-    private Unidad objetivoAtaqueActual;
-
-    [Header("Comportamiento de Búsqueda de Objetivo")]
-    public bool puedeAgredirAutomaticamente = true;
-    public float maxDistanciaEnganche = 50f;
-    private float proximoTiempoBusquedaEnemigo = 0f;
-    private float intervaloBusquedaEnemigo = 1.0f;
-
     [Header("Comportamiento de Ataque")]
     public float distanciaRetroceso = 0.5f;
     public float duracionRetroceso = 0.2f;
     private bool estaRetrocediendo = false;
 
-    // Inicializa las estadísticas y componentes específicos del Caballero al ser creado.
+    private Unidad objetivoAtaqueActual;
+
+    [Header("Comportamiento de Auto-Agresión")]
+    public bool puedeAgredirAutomaticamente = true;
+    public float maxDistanciaAgresion = 20f;
+    private float proximoTiempoBusquedaEnemigo = 0f;
+    private float intervaloBusquedaEnemigo = 1.0f;
+
     protected override void Awake()
     {
         base.Awake();
@@ -42,7 +41,6 @@ public class Caballero : Unidad
         if (navMeshAgent != null) navMeshAgent.speed = velocidadMovimiento;
     }
 
-    // Gestiona la lógica de carga, retroceso, ataque, movimiento y búsqueda automática de enemigos en cada frame.
     public override void Update()
     {
         base.Update();
@@ -67,11 +65,6 @@ public class Caballero : Unidad
             {
                 objetivoAtaqueActual = null;
                 if (navMeshAgent != null && navMeshAgent.hasPath) navMeshAgent.ResetPath();
-
-                if (puedeAgredirAutomaticamente)
-                {
-                    BuscarSiguienteEnemigoMasCercano();
-                }
             }
             else
             {
@@ -109,7 +102,6 @@ public class Caballero : Unidad
         }
     }
 
-    // Orienta al Caballero para que mire hacia un punto específico en el espacio.
     protected void MirarHacia(Vector3 punto)
     {
         if (navMeshAgent == null) return;
@@ -124,7 +116,6 @@ public class Caballero : Unidad
         }
     }
 
-    // Establece una unidad enemiga como el objetivo de ataque actual del Caballero.
     public override void Atacar(Unidad objetivo)
     {
         if (estaRetrocediendo || estaCargando) return;
@@ -132,6 +123,7 @@ public class Caballero : Unidad
         if (objetivo != null && objetivo.vidaActual > 0 && objetivo.equipoID != this.equipoID)
         {
             objetivoAtaqueActual = objetivo;
+            estaCargando = false;
             if (navMeshAgent != null) navMeshAgent.speed = velocidadMovimiento;
         }
         else
@@ -143,16 +135,15 @@ public class Caballero : Unidad
         }
     }
 
-    // Ejecuta un ataque cuerpo a cuerpo contra la unidad objetivo y puede iniciar un retroceso.
     private void RealizarAtaqueMelee(Unidad objetivo)
     {
         if (objetivo == null || objetivo.vidaActual <= 0 || estaRetrocediendo || estaCargando) return;
 
         objetivo.RecibirDano(danoAtaqueCaballero);
 
-        if (navMeshAgent != null && navMeshAgent.isOnNavMesh)
+        if (navMeshAgent != null && navMeshAgent.isOnNavMesh && distanciaRetroceso > 0 && duracionRetroceso > 0)
         {
-            if (objetivo.vidaActual > 0 && distanciaRetroceso > 0)
+            if (objetivo.vidaActual > 0)
             {
                 StartCoroutine(RetrocederTrasAtaqueCoroutine(objetivo.transform.position));
             }
@@ -167,16 +158,21 @@ public class Caballero : Unidad
         }
     }
 
-    // Corrutina que hace retroceder al Caballero una corta distancia después de realizar un ataque.
     private IEnumerator RetrocederTrasAtaqueCoroutine(Vector3 posicionDelObjetivoAlAtacar)
     {
         if (estaRetrocediendo) yield break;
 
         estaRetrocediendo = true;
-        if (navMeshAgent != null && navMeshAgent.hasPath) navMeshAgent.ResetPath();
+        if (navMeshAgent != null && navMeshAgent.hasPath)
+        {
+            navMeshAgent.ResetPath();
+        }
 
         Vector3 direccionDesdeObjetivo = (transform.position - posicionDelObjetivoAlAtacar).normalized;
-        if (direccionDesdeObjetivo.sqrMagnitude < 0.01f) direccionDesdeObjetivo = -transform.forward;
+        if (direccionDesdeObjetivo.sqrMagnitude < 0.01f)
+        {
+            direccionDesdeObjetivo = -transform.forward;
+        }
 
         float tiempoPasado = 0f;
         float velocidadDeRetroceso = distanciaRetroceso / duracionRetroceso;
@@ -198,15 +194,17 @@ public class Caballero : Unidad
         proximoTiempoAtaque = Time.time + cooldownAtaque;
     }
 
-    // Procesa el daño recibido por el Caballero, aplicando la reducción por armadura.
     public override void RecibirDano(float cantidad)
     {
         float danoReducido = Mathf.Max(0, cantidad - armadura);
         vidaActual -= danoReducido;
-        if (vidaActual <= 0) { vidaActual = 0; Morir(); }
+        if (vidaActual <= 0)
+        {
+            vidaActual = 0;
+            Morir();
+        }
     }
 
-    // Maneja la lógica de destrucción del Caballero cuando su vida llega a cero.
     protected override void Morir()
     {
         StopAllCoroutines();
@@ -216,7 +214,6 @@ public class Caballero : Unidad
         base.Morir();
     }
 
-    // Inicia la habilidad de carga del Caballero hacia un punto destino.
     public void IniciarCargaHacia(Vector3 puntoDestino)
     {
         if (Time.time < proximoTiempoCarga) return;
@@ -226,21 +223,28 @@ public class Caballero : Unidad
         objetivoAtaqueActual = null;
         if (navMeshAgent != null) navMeshAgent.speed = velocidadCarga;
         MoverA(puntoDestino);
+
         Invoke(nameof(FinalizarCargaPorTiempoSiNoLlego), duracionBoostVelocidadCarga);
     }
 
-    // Finaliza la carga si no se ha alcanzado el objetivo después de un tiempo determinado, restaurando la velocidad normal.
     private void FinalizarCargaPorTiempoSiNoLlego()
     {
-        if (estaCargando && navMeshAgent != null) navMeshAgent.speed = velocidadMovimiento;
+        if (estaCargando && navMeshAgent != null)
+        {
+            if (navMeshAgent.pathPending || navMeshAgent.remainingDistance > navMeshAgent.stoppingDistance + 0.1f)
+            {
+                navMeshAgent.speed = velocidadMovimiento;
+            }
+        }
     }
 
-    // Finaliza la habilidad de carga, aplica daño en área si corresponde y restaura la velocidad normal.
     private void FinalizarCarga(bool aplicarDanoArea)
     {
         if (!estaCargando) return;
+
         estaCargando = false;
         if (navMeshAgent != null) navMeshAgent.speed = velocidadMovimiento;
+
         if (aplicarDanoArea)
         {
             Collider[] unidadesGolpeadas = Physics.OverlapSphere(transform.position, 2.0f, Unidad.capaUnidades);
@@ -256,36 +260,43 @@ public class Caballero : Unidad
         proximoTiempoCarga = Time.time + cooldownCarga;
     }
 
-    // Intenta usar una habilidad especial, primariamente la carga si es la habilidad número 0.
-    public override void UsarHabilidadEspecial(int numeroHabilidad, Unidad objetivoUnidad = null, Vector3 posicionObjetivo = default)
+    public override void UsarHabilidadEspecial(int numeroHabilidad, Unidad objetivoUnidad = null, Vector3 posicionObjetivoSuelo = default)
     {
         if (estaRetrocediendo) return;
+
         if (numeroHabilidad == 0)
         {
             Vector3 puntoDeCarga = default;
             bool objetivoValidoParaCarga = false;
+
             if (objetivoUnidad != null && objetivoUnidad.equipoID != this.equipoID && objetivoUnidad.vidaActual > 0)
             {
                 puntoDeCarga = objetivoUnidad.transform.position;
                 objetivoValidoParaCarga = true;
             }
-            else if (posicionObjetivo != default)
+            else if (posicionObjetivoSuelo != default)
             {
-                puntoDeCarga = posicionObjetivo;
+                puntoDeCarga = posicionObjetivoSuelo;
                 objetivoValidoParaCarga = true;
             }
-            if (objetivoValidoParaCarga) IniciarCargaHacia(puntoDeCarga);
+
+            if (objetivoValidoParaCarga)
+            {
+                IniciarCargaHacia(puntoDeCarga);
+            }
         }
-        else base.UsarHabilidadEspecial(numeroHabilidad, objetivoUnidad, posicionObjetivo);
+        else
+        {
+            base.UsarHabilidadEspecial(numeroHabilidad, objetivoUnidad, posicionObjetivoSuelo);
+        }
     }
 
-    // Busca y asigna automáticamente la unidad enemiga más cercana dentro del rango de enganche.
     protected virtual void BuscarSiguienteEnemigoMasCercano()
     {
         if (navMeshAgent == null || estaRetrocediendo || estaCargando) return;
 
         Unidad enemigoMasCercanoEncontrado = null;
-        float menorDistanciaSqr = float.MaxValue;
+        float menorDistanciaSqr = maxDistanciaAgresion * maxDistanciaAgresion;
 
         foreach (Unidad unidadPotencial in Unidad.todasLasUnidadesActivas)
         {
@@ -302,10 +313,7 @@ public class Caballero : Unidad
 
         if (enemigoMasCercanoEncontrado != null)
         {
-            if (menorDistanciaSqr <= (maxDistanciaEnganche * maxDistanciaEnganche))
-            {
-                Atacar(enemigoMasCercanoEncontrado);
-            }
+            Atacar(enemigoMasCercanoEncontrado);
         }
     }
 }
