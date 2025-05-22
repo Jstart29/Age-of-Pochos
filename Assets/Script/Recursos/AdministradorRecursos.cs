@@ -1,4 +1,3 @@
-// AdministradorRecursos.cs
 using UnityEngine;
 using System.Collections.Generic; // Para el Diccionario
 
@@ -24,11 +23,8 @@ public class AdministradorRecursos : MonoBehaviour
         }
     }
 
-    // Diccionario para almacenar los recursos por equipoID.
-    // La clave interna es el TipoRecurso, el valor es la cantidad.
     private Dictionary<int, Dictionary<TipoRecurso, int>> recursosPorEquipo = new Dictionary<int, Dictionary<TipoRecurso, int>>();
 
-    // Evento para notificar a la UI u otros sistemas cuando los recursos cambian
     public delegate void ActualizacionDeRecursosHandler(int equipoID, TipoRecurso tipo, int nuevaCantidad);
     public event ActualizacionDeRecursosHandler OnRecursosActualizados;
 
@@ -40,10 +36,7 @@ public class AdministradorRecursos : MonoBehaviour
             return;
         }
         _instancia = this;
-        DontDestroyOnLoad(gameObject); // Opcional: hacerlo persistente entre escenas
-
-        // Inicializar recursos para equipos (ej. para el jugador) si es necesario
-        // Podrías inicializar con valores de inicio aquí o cuando se une un jugador/equipo.
+        DontDestroyOnLoad(gameObject); 
     }
 
     // Inicializa los recursos para un equipo específico si aún no existen
@@ -78,8 +71,6 @@ public class AdministradorRecursos : MonoBehaviour
 
         recursosPorEquipo[equipoID][tipo] += cantidad;
         Debug.Log($"Equipo {equipoID} obtuvo {cantidad} de {tipo}. Total ahora: {recursosPorEquipo[equipoID][tipo]}");
-
-        // Notificar a los suscriptores (ej. la UI)
         OnRecursosActualizados?.Invoke(equipoID, tipo, recursosPorEquipo[equipoID][tipo]);
     }
 

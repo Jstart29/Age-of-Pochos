@@ -1,7 +1,5 @@
-// ControladorNavegacionUI.cs
 using UnityEngine;
-using UnityEngine.SceneManagement; // Necesario para cambiar de escena
-
+using UnityEngine.SceneManagement;
 public class ControladorNavegacionUI : MonoBehaviour
 {
     public void CargarEscenaPorNombre(string nombreDeLaEscena)
@@ -13,7 +11,7 @@ public class ControladorNavegacionUI : MonoBehaviour
 
         Debug.Log($"ControladorNavegacionUI: Cargando escena '{nombreDeLaEscena}'...");
 
-        if (FindObjectOfType<AdministradorDeEscenas>() != null) // Una forma de verificar si existe una instancia
+        if (FindObjectOfType<AdministradorDeEscenas>() != null)
         {
             AdministradorDeEscenas.PermitirNuevaTransicionDeEscena();
         }

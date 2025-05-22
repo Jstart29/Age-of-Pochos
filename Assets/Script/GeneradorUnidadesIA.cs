@@ -1,4 +1,3 @@
-// GeneradorUnidadesIA.cs (Modificado)
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -8,15 +7,13 @@ public class InfoUnidadAGenerarIA
     public string nombreDescriptivo;
     public GameObject prefabUnidadIA;
     public int costoOro;
-    public Transform puntoDeAparicionEspecifico; // NUEVO CAMPO para el spawn point de este tipo de unidad
-    // Podrías añadir más costos aquí si usas otros recursos
+    public Transform puntoDeAparicionEspecifico;
 }  
 
 public class GeneradorUnidadesIA : MonoBehaviour
 {
     [Header("Configuración General IA")]
     public int equipoIA = 2;
-    // Este punto de aparición general puede ser un fallback o para unidades que no tengan uno específico
     public Transform puntoDeAparicionGeneralIA; 
     public bool generacionActiva = true;
 
@@ -34,11 +31,9 @@ public class GeneradorUnidadesIA : MonoBehaviour
 
     void Start()
     {
-        // Es bueno tener al menos el punto de aparición general como fallback
         if (puntoDeAparicionGeneralIA == null)
         {
             Debug.LogWarning($"GeneradorUnidadesIA ({gameObject.name}): El 'Punto De Aparicion General IA' no está asignado. Algunas unidades podrían no generarse si no tienen un punto específico.", this);
-            // podrías decidir desactivar la generación si este es crítico: generacionActiva = false;
         }
 
         if (listaUnidadesGenerables.Count == 0)
@@ -126,9 +121,5 @@ public class GeneradorUnidadesIA : MonoBehaviour
             }
             // Debug.Log($"IA (Equipo {equipoIA}) generó '{unidadInfo.nombreDescriptivo}' en {puntoDeAparicionDesignado.name}. Costo: {unidadInfo.costoOro} Oro.");
         }
-        // else
-        // {
-        //     Debug.Log($"IA (Equipo {equipoIA}) no tiene suficiente Oro para generar '{unidadInfo.nombreDescriptivo}'. Necesita: {unidadInfo.costoOro}.");
-        // }
     }
 }

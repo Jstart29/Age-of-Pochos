@@ -1,4 +1,3 @@
-// MenuEntrenamiento.cs
 using UnityEngine;
 
 public class MenuEntrenamiento : MonoBehaviour
@@ -20,7 +19,6 @@ public class MenuEntrenamiento : MonoBehaviour
     public Transform puntoAparicionCaballero;
     public Transform puntoAparicionMago;
     public Transform puntoAparicionTanque;
-    // El 'puntoDeAparicion' general anterior ya no es necesario si cada unidad tiene el suyo.
 
     private int idEquipoJugador;
 
@@ -28,7 +26,6 @@ public class MenuEntrenamiento : MonoBehaviour
     {
         idEquipoJugador = Unidad.equipoDelJugador;
 
-        // Validaciones iniciales para los puntos de aparición (opcional, pero recomendado)
         if (prefabTrabajador != null && puntoAparicionTrabajador == null)
             Debug.LogError($"MenuEntrenamiento: Punto de Aparición para Trabajador no asignado!", this);
         if (prefabCaballero != null && puntoAparicionCaballero == null)
@@ -74,21 +71,12 @@ public class MenuEntrenamiento : MonoBehaviour
             {
                 scriptUnidad.equipoID = idEquipoJugador;
             }
-            // Debug.Log($"Unidad '{nombreUnidadLog}' creada para el equipo {idEquipoJugador} en {puntoDeAparicionEspecifico.name}. Costo: {costoOro} Oro.");
-
-            // Opcional: Darle una orden de moverse a un punto de reunión cercano al punto de aparición
-            // if(scriptUnidad != null && puntoDeAparicionEspecifico != null) 
-            // {
-            //     scriptUnidad.MoverA(puntoDeAparicionEspecifico.position + puntoDeAparicionEspecifico.forward * 5f);
-            // }
         }
         else
         {
             // Debug.Log($"No hay suficiente Oro para crear '{nombreUnidadLog}'. Se requieren: {costoOro}.");
         }
     }
-
-    // --- Métodos Públicos para los Botones de la UI ---
 
     public void CrearTrabajador()
     {

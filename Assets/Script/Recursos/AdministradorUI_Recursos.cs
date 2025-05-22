@@ -1,5 +1,5 @@
 using UnityEngine;
-using TMPro; // O using UnityEngine.UI; si usas Legacy Text
+using TMPro;
 
 public class AdministradorUI_Recursos : MonoBehaviour
 {
@@ -36,8 +36,6 @@ public class AdministradorUI_Recursos : MonoBehaviour
             AdministradorRecursos.Instancia.OnRecursosActualizados -= ActualizarTextoRecursoEspecifico;
         }
     }
-
-    // Este método se llama cuando el evento OnRecursosActualizados se dispara
     void ActualizarTextoRecursoEspecifico(int equipoID, TipoRecurso tipo, int nuevaCantidad)
     {
         // Solo actualizar la UI si los recursos son del equipo del jugador actual
@@ -54,13 +52,10 @@ public class AdministradorUI_Recursos : MonoBehaviour
                 if (textoOro != null) textoOro.text = $"Oro: {nuevaCantidad}";
                 break;
             default:
-                // Debug.LogWarning($"Tipo de recurso no manejado por la UI: {tipo}");
                 break;
         }
     }
 
-    // Método para forzar la actualización de todos los textos de recursos
-    // Útil para la inicialización o si necesitas refrescar toda la UI de recursos
     public void ActualizarTodosLosTextos()
     {
         // Debug.Log($"UI Actualizando todos los textos para el equipo {idEquipoJugador}");

@@ -15,12 +15,10 @@ public class ControladorCamaraRTS : MonoBehaviour
     public float alturaMinimaZoom = 5f;  // Altura Y mínima a la que puede llegar la cámara
     public float alturaMaximaZoom = 50f; // Altura Y máxima
 
-    private float rotacionYActual; // Para mantener la rotación Y actual y aplicarla
+    private float rotacionYActual; 
 
     void Start()
     {
-        // Guardar la rotación Y actual de la cámara (si la tenía configurada en el editor)
-        // o empezar desde cero si se prefiere.
         rotacionYActual = transform.eulerAngles.y;
 
         // Aplicar la inclinación inicial en X, manteniendo la rotación Y y Z=0
@@ -99,8 +97,6 @@ public class ControladorCamaraRTS : MonoBehaviour
         float scrollInput = Input.GetAxis("Mouse ScrollWheel");
         if (scrollInput != 0f)
         {
-            // El scroll hacia arriba da positivo (acercar = bajar), hacia abajo negativo (alejar = subir)
-            // Por lo tanto, invertimos el input para que hacia arriba suba la cámara (aleje) y hacia abajo baje (acerque).
             Vector3 nuevaPosicionZoom = transform.position - Vector3.up * scrollInput * velocidadZoom * 10f * Time.deltaTime; // Multiplicador para hacerlo más sensible
             // Limitar la altura del zoom
             nuevaPosicionZoom.y = Mathf.Clamp(nuevaPosicionZoom.y, alturaMinimaZoom, alturaMaximaZoom);
