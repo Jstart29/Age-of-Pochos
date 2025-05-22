@@ -1,11 +1,9 @@
 // MenuEntrenamiento.cs
 using UnityEngine;
-// Podrías necesitar using UnityEngine.UI; si quieres interactuar con elementos de UI directamente desde aquí,
-// pero para los OnClick de los botones, no es estrictamente necesario.
 
 public class MenuEntrenamiento : MonoBehaviour
 {
-    [Header("Prefabs de Unidades")]
+    [Header("Prefabs de Unidades del Jugador")]
     public GameObject prefabTrabajador;
     public GameObject prefabCaballero;
     public GameObject prefabMago;
@@ -16,63 +14,77 @@ public class MenuEntrenamiento : MonoBehaviour
     public int costoOroCaballero = 50;
     public int costoOroMago = 75;
     public int costoOroTanque = 100;
-    // Podrías expandir esto a otros tipos de recursos si es necesario
 
-    [Header("Configuración de Aparición")]
-    public Transform puntoDeAparicion; // Asigna un Empty Object en tu escena aquí
+    [Header("Puntos de Aparición Específicos (Jugador)")]
+    public Transform puntoAparicionTrabajador;
+    public Transform puntoAparicionCaballero;
+    public Transform puntoAparicionMago;
+    public Transform puntoAparicionTanque;
+    // El 'puntoDeAparicion' general anterior ya no es necesario si cada unidad tiene el suyo.
 
     private int idEquipoJugador;
 
     void Start()
     {
-        idEquipoJugador = Unidad.equipoDelJugador; // Asumimos que este menú es para el jugador principal
+        idEquipoJugador = Unidad.equipoDelJugador;
 
-        if (puntoDeAparicion == null)
-        {
-            Debug.LogError("MenuEntrenamiento: ¡El Punto de Aparición no está asignado en el Inspector!", this);
-            // Considera desactivar el script o los botones si no hay punto de aparición
-            enabled = false;
-        }
+        // Validaciones iniciales para los puntos de aparición (opcional, pero recomendado)
+        if (prefabTrabajador != null && puntoAparicionTrabajador == null)
+            Debug.LogError($"MenuEntrenamiento: Punto de Aparición para Trabajador no asignado!", this);
+        if (prefabCaballero != null && puntoAparicionCaballero == null)
+            Debug.LogError($"MenuEntrenamiento: Punto de Aparición para Caballero no asignado!", this);
+        if (prefabMago != null && puntoAparicionMago == null)
+            Debug.LogError($"MenuEntrenamiento: Punto de Aparición para Mago no asignado!", this);
+        if (prefabTanque != null && puntoAparicionTanque == null)
+            Debug.LogError($"MenuEntrenamiento: Punto de Aparición para Tanque no asignado!", this);
+
         if (AdministradorRecursos.Instancia == null)
         {
             Debug.LogError("MenuEntrenamiento: ¡AdministradorRecursos.Instancia no encontrado! Asegúrate de que exista en la escena.", this);
-            enabled = false;
+            // Considera desactivar los botones o el script si esto es crítico
+            // enabled = false; 
         }
     }
 
-    // Método privado genérico para intentar crear una unidad
-    private void IntentarCrearUnidad(GameObject prefabUnidad, int costoOro, string nombreUnidadLog)
+    // Método privado genérico para intentar crear una unidad, ahora usa un punto de aparición específico
+    private void IntentarCrearUnidadEspecifica(GameObject prefabUnidad, int costoOro, string nombreUnidadLog, Transform puntoDeAparicionEspecifico)
     {
         if (prefabUnidad == null)
         {
             Debug.LogError($"MenuEntrenamiento: Prefab para '{nombreUnidadLog}' no asignado.", this);
             return;
         }
-        if (puntoDeAparicion == null) // Doble chequeo
+        if (puntoDeAparicionEspecifico == null)
         {
-            Debug.LogError("MenuEntrenamiento: ¡El Punto de Aparición no está configurado!", this);
+            Debug.LogError($"MenuEntrenamiento: ¡El Punto de Aparición para '{nombreUnidadLog}' no está configurado en el Inspector!", this);
+            return;
+        }
+        if (AdministradorRecursos.Instancia == null) // Chequeo por si acaso
+        {
+            Debug.LogError("MenuEntrenamiento: AdministradorRecursos no disponible.", this);
             return;
         }
 
-        // Verificar y gastar recursos
+
         if (AdministradorRecursos.Instancia.GastarRecursos(idEquipoJugador, TipoRecurso.Oro, costoOro))
         {
-            // Si los recursos se gastaron con éxito, instanciar la unidad
-            GameObject nuevaUnidadGO = Instantiate(prefabUnidad, puntoDeAparicion.position, puntoDeAparicion.rotation);
+            GameObject nuevaUnidadGO = Instantiate(prefabUnidad, puntoDeAparicionEspecifico.position, puntoDeAparicionEspecifico.rotation);
             Unidad scriptUnidad = nuevaUnidadGO.GetComponent<Unidad>();
             if (scriptUnidad != null)
             {
-                scriptUnidad.equipoID = idEquipoJugador; // Asegurar que la unidad pertenezca al jugador
+                scriptUnidad.equipoID = idEquipoJugador;
             }
-            Debug.Log($"Unidad '{nombreUnidadLog}' creada para el equipo {idEquipoJugador}. Costo: {costoOro} Oro.");
+            // Debug.Log($"Unidad '{nombreUnidadLog}' creada para el equipo {idEquipoJugador} en {puntoDeAparicionEspecifico.name}. Costo: {costoOro} Oro.");
 
-            // Opcional: Darle una orden de moverse a un punto de reunión cercano
-            // if(scriptUnidad != null) scriptUnidad.MoverA(puntoDeAparicion.position + puntoDeAparicion.forward * 5f); // Mover 5 unidades hacia adelante del punto de aparición
+            // Opcional: Darle una orden de moverse a un punto de reunión cercano al punto de aparición
+            // if(scriptUnidad != null && puntoDeAparicionEspecifico != null) 
+            // {
+            //     scriptUnidad.MoverA(puntoDeAparicionEspecifico.position + puntoDeAparicionEspecifico.forward * 5f);
+            // }
         }
         else
         {
-            Debug.Log($"No hay suficiente Oro para crear '{nombreUnidadLog}'. Se requieren: {costoOro}.");
-            // Aquí podrías mostrar un mensaje al jugador en la UI o reproducir un sonido de error
+            // Debug.Log($"No hay suficiente Oro para crear '{nombreUnidadLog}'. Se requieren: {costoOro}.");
         }
     }
 
@@ -80,21 +92,21 @@ public class MenuEntrenamiento : MonoBehaviour
 
     public void CrearTrabajador()
     {
-        IntentarCrearUnidad(prefabTrabajador, costoOroTrabajador, "Trabajador");
+        IntentarCrearUnidadEspecifica(prefabTrabajador, costoOroTrabajador, "Trabajador", puntoAparicionTrabajador);
     }
 
     public void CrearCaballero()
     {
-        IntentarCrearUnidad(prefabCaballero, costoOroCaballero, "Caballero");
+        IntentarCrearUnidadEspecifica(prefabCaballero, costoOroCaballero, "Caballero", puntoAparicionCaballero);
     }
 
     public void CrearMago()
     {
-        IntentarCrearUnidad(prefabMago, costoOroMago, "Mago");
+        IntentarCrearUnidadEspecifica(prefabMago, costoOroMago, "Mago", puntoAparicionMago);
     }
 
     public void CrearTanque()
     {
-        IntentarCrearUnidad(prefabTanque, costoOroTanque, "Tanque");
+        IntentarCrearUnidadEspecifica(prefabTanque, costoOroTanque, "Tanque", puntoAparicionTanque);
     }
 }

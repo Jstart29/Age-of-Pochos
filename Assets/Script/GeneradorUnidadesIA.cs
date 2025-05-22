@@ -1,63 +1,73 @@
-// GeneradorUnidadesIA.cs
+// GeneradorUnidadesIA.cs (Modificado)
 using UnityEngine;
-using System.Collections.Generic; // Para usar Listas
+using System.Collections.Generic;
 
-// Pequeña clase para organizar la información de las unidades que la IA puede generar
-[System.Serializable] // Para que aparezca en el Inspector
+[System.Serializable]
 public class InfoUnidadAGenerarIA
 {
-    public string nombreDescriptivo; // Ej. "Guerrero IA", "Mago IA"
+    public string nombreDescriptivo;
     public GameObject prefabUnidadIA;
     public int costoOro;
+    public Transform puntoDeAparicionEspecifico; // NUEVO CAMPO para el spawn point de este tipo de unidad
     // Podrías añadir más costos aquí si usas otros recursos
-}
+}  
 
 public class GeneradorUnidadesIA : MonoBehaviour
 {
     [Header("Configuración General IA")]
-    public int equipoIA = 2; // El ID del equipo para esta IA
-    public Transform puntoDeAparicionIA; // Dónde aparecerán las unidades de la IA
-    public bool generacionActiva = true; // Para activar/desactivar la generación
+    public int equipoIA = 2;
+    // Este punto de aparición general puede ser un fallback o para unidades que no tengan uno específico
+    public Transform puntoDeAparicionGeneralIA; 
+    public bool generacionActiva = true;
 
     [Header("Unidades Generables por la IA")]
     public List<InfoUnidadAGenerarIA> listaUnidadesGenerables = new List<InfoUnidadAGenerarIA>();
 
     [Header("Economía y Tiempos de IA")]
-    public float intervaloIntentoGeneracion = 15f; // Cada cuántos segundos intenta generar una unidad
+    public float intervaloIntentoGeneracion = 15f;
     public int oroInicialIA = 500;
-    public int oroPorIntervaloIA = 50; // Cuánto oro "gana" la IA cada cierto tiempo
-    public float intervaloIngresoOroIA = 20f; // Cada cuántos segundos recibe el oroPorIntervaloIA
+    public int oroPorIntervaloIA = 50;
+    public float intervaloIngresoOroIA = 20f;
 
     private float proximoTiempoGeneracion;
     private float proximoTiempoIngresoOro;
 
     void Start()
     {
-        if (puntoDeAparicionIA == null)
+        // Es bueno tener al menos el punto de aparición general como fallback
+        if (puntoDeAparicionGeneralIA == null)
         {
-            Debug.LogError($"GeneradorUnidadesIA ({gameObject.name}): ¡Punto de Aparición no asignado! La generación se desactivará.", this);
-            generacionActiva = false;
-            return;
+            Debug.LogWarning($"GeneradorUnidadesIA ({gameObject.name}): El 'Punto De Aparicion General IA' no está asignado. Algunas unidades podrían no generarse si no tienen un punto específico.", this);
+            // podrías decidir desactivar la generación si este es crítico: generacionActiva = false;
         }
 
         if (listaUnidadesGenerables.Count == 0)
         {
             Debug.LogWarning($"GeneradorUnidadesIA ({gameObject.name}): La lista de unidades generables está vacía.", this);
-            // generacionActiva = false; // Podrías desactivarlo si no hay nada que generar
         }
-
+        else
+        {
+            // Verificar si los puntos de aparición específicos están asignados para las unidades en la lista
+            foreach (var unidadInfo in listaUnidadesGenerables)
+            {
+                if (unidadInfo.prefabUnidadIA != null && unidadInfo.puntoDeAparicionEspecifico == null)
+                {
+                    Debug.LogWarning($"GeneradorUnidadesIA ({gameObject.name}): La unidad '{unidadInfo.nombreDescriptivo}' no tiene un 'Punto De Aparicion Especifico' asignado. Usará el general si está disponible.", this);
+                }
+            }
+        }
+        
         if (AdministradorRecursos.Instancia == null)
         {
-            Debug.LogError($"GeneradorUnidadesIA ({gameObject.name}): ¡AdministradorRecursos.Instancia no encontrado!", this);
-            generacionActiva = false;
-            return;
+             Debug.LogError($"GeneradorUnidadesIA ({gameObject.name}): ¡AdministradorRecursos.Instancia no encontrado!", this);
+             generacionActiva = false;
+             return;
         }
 
-        // Dar recursos iniciales a la IA
         AdministradorRecursos.Instancia.EstablecerRecursosIniciales(equipoIA, TipoRecurso.Oro, oroInicialIA);
-        Debug.Log($"IA Equipo {equipoIA} inicia con {oroInicialIA} de Oro.");
+        // Debug.Log($"IA Equipo {equipoIA} inicia con {oroInicialIA} de Oro.");
 
-        proximoTiempoGeneracion = Time.time + intervaloIntentoGeneracion;
+        proximoTiempoGeneracion = Time.time + Random.Range(intervaloIntentoGeneracion * 0.5f, intervaloIntentoGeneracion * 1.5f); // Añadir algo de aleatoriedad al primer spawn
         proximoTiempoIngresoOro = Time.time + intervaloIngresoOroIA;
     }
 
@@ -65,57 +75,56 @@ public class GeneradorUnidadesIA : MonoBehaviour
     {
         if (!generacionActiva) return;
 
-        // Otorgar recursos a la IA periódicamente
         if (Time.time >= proximoTiempoIngresoOro)
         {
             AdministradorRecursos.Instancia.AnadirRecursos(equipoIA, TipoRecurso.Oro, oroPorIntervaloIA);
-            // Debug.Log($"IA Equipo {equipoIA} recibió {oroPorIntervaloIA} de Oro. Total: {AdministradorRecursos.Instancia.ObtenerCantidadRecurso(equipoIA, TipoRecurso.Oro)}");
             proximoTiempoIngresoOro = Time.time + intervaloIngresoOroIA;
         }
 
-        // Intentar generar una unidad si es el momento
         if (Time.time >= proximoTiempoGeneracion)
         {
-            IntentarGenerarUnidadAleatoria();
+            IntentarGenerarUnidadDesdeLista(); // Renombrado para claridad
             proximoTiempoGeneracion = Time.time + intervaloIntentoGeneracion;
         }
     }
 
-    void IntentarGenerarUnidadAleatoria()
+    void IntentarGenerarUnidadDesdeLista()
     {
         if (listaUnidadesGenerables.Count == 0) return;
 
-        // Elegir una unidad aleatoria de la lista para intentar generar
         int indiceAleatorio = Random.Range(0, listaUnidadesGenerables.Count);
         InfoUnidadAGenerarIA unidadInfo = listaUnidadesGenerables[indiceAleatorio];
 
         if (unidadInfo.prefabUnidadIA == null)
         {
-            Debug.LogWarning($"GeneradorUnidadesIA: Prefab nulo en la lista de unidades generables en el índice {indiceAleatorio}.", this);
+            // Debug.LogWarning($"GeneradorUnidadesIA: Prefab nulo en la lista de unidades generables en el índice {indiceAleatorio}.", this);
             return;
         }
 
+        // Determinar el punto de aparición
+        Transform puntoDeAparicionDesignado = unidadInfo.puntoDeAparicionEspecifico;
+        if (puntoDeAparicionDesignado == null) // Si no hay uno específico para este tipo de unidad
+        {
+            puntoDeAparicionDesignado = this.puntoDeAparicionGeneralIA; // Usar el general como fallback
+        }
+
+        if (puntoDeAparicionDesignado == null) // Si ni el específico ni el general están asignados
+        {
+            Debug.LogError($"GeneradorUnidadesIA: No se pudo determinar un punto de aparición para '{unidadInfo.nombreDescriptivo}'. Ni específico ni general están asignados.", this);
+            return;
+        }
+        
         // Debug.Log($"IA Equipo {equipoIA} intentando generar '{unidadInfo.nombreDescriptivo}' (Costo: {unidadInfo.costoOro} Oro). Oro actual: {AdministradorRecursos.Instancia.ObtenerCantidadRecurso(equipoIA, TipoRecurso.Oro)}");
 
-        // Verificar y gastar recursos
         if (AdministradorRecursos.Instancia.GastarRecursos(equipoIA, TipoRecurso.Oro, unidadInfo.costoOro))
         {
-            GameObject nuevaUnidadGO = Instantiate(unidadInfo.prefabUnidadIA, puntoDeAparicionIA.position, puntoDeAparicionIA.rotation);
+            GameObject nuevaUnidadGO = Instantiate(unidadInfo.prefabUnidadIA, puntoDeAparicionDesignado.position, puntoDeAparicionDesignado.rotation);
             Unidad scriptUnidad = nuevaUnidadGO.GetComponent<Unidad>();
             if (scriptUnidad != null)
             {
-                scriptUnidad.equipoID = equipoIA; // ¡Importante asignar el equipo correcto a la unidad de la IA!
+                scriptUnidad.equipoID = equipoIA;
             }
-            Debug.Log($"IA (Equipo {equipoIA}) generó '{unidadInfo.nombreDescriptivo}'. Costo: {unidadInfo.costoOro} Oro.");
-
-            // Opcional: Darle una orden inicial a la unidad IA
-            // if(scriptUnidad != null)
-            // {
-            //    // Ejemplo: Moverla a un punto de reunión o buscar enemigos
-            //    Vector3 puntoReunion = puntoDeAparicionIA.position + Random.insideUnitSphere * 5f;
-            //    puntoReunion.y = puntoDeAparicionIA.position.y; // Mantener en el suelo
-            //    scriptUnidad.MoverA(puntoReunion);
-            // }
+            // Debug.Log($"IA (Equipo {equipoIA}) generó '{unidadInfo.nombreDescriptivo}' en {puntoDeAparicionDesignado.name}. Costo: {unidadInfo.costoOro} Oro.");
         }
         // else
         // {

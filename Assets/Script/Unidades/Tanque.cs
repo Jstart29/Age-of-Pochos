@@ -1,4 +1,3 @@
-// Tanque.cs
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -8,14 +7,14 @@ public class Tanque : Unidad
     public float danoAtaqueTanque = 8f;
     public float rangoAtaqueTanque = 2.0f;
     public float cooldownAtaqueTanque = 2.2f;
-    public float armaduraTanque = 8f;
+    public float armaduraTanque = 10f;
 
     private float proximoTiempoAtaque = 0f;
     private Unidad objetivoAtaqueActual;
 
     [Header("Comportamiento de Auto-Agresión del Tanque")]
     public bool puedeAgredirAutomaticamente = true;
-    public float maxDistanciaAgresionTanque = 12f;
+    public float maxDistanciaAgresionTanque = 15f;
     private float proximoTiempoBusquedaEnemigo = 0f;
     private float intervaloBusquedaEnemigo = 1.0f;
 
@@ -29,6 +28,13 @@ public class Tanque : Unidad
         {
             navMeshAgent.speed = velocidadMovimiento;
         }
+    }
+
+    protected override void CancelarAccionActual()
+    {
+        base.CancelarAccionActual(); // Llama a la implementación de Unidad (resetea path)
+        objetivoAtaqueActual = null;
+        // Si el Tanque tuviera otros estados específicos (ej. un modo defensivo), resetéalos aquí.
     }
 
     public override void Update()
@@ -87,6 +93,7 @@ public class Tanque : Unidad
 
     public override void Atacar(Unidad objetivo)
     {
+        // CancelarAccionActual() ya es llamado por Unidad.Atacar()
         if (objetivo != null && objetivo.vidaActual > 0 && objetivo.equipoID != this.equipoID)
         {
             objetivoAtaqueActual = objetivo;
@@ -100,6 +107,7 @@ public class Tanque : Unidad
     private void RealizarAtaqueSimple(Unidad objetivo)
     {
         if (objetivo == null || objetivo.vidaActual <= 0) return;
+
         objetivo.RecibirDano(danoAtaqueTanque);
         proximoTiempoAtaque = Time.time + cooldownAtaqueTanque;
     }
@@ -117,13 +125,14 @@ public class Tanque : Unidad
 
     protected override void Morir()
     {
-        objetivoAtaqueActual = null;
+        CancelarAccionActual();
         base.Morir();
     }
 
     protected virtual void BuscarSiguienteEnemigoMasCercano()
     {
         if (navMeshAgent == null) return;
+
         Unidad enemigoMasCercanoEncontrado = null;
         float menorDistanciaSqr = maxDistanciaAgresionTanque * maxDistanciaAgresionTanque;
 
@@ -131,14 +140,15 @@ public class Tanque : Unidad
         {
             if (unidadPotencial != null && unidadPotencial.vidaActual > 0 && unidadPotencial.equipoID != this.equipoID)
             {
-                float distanciaSqrActual = (transform.position - unidadPotencial.transform.position).sqrMagnitude;
-                if (distanciaSqrActual < menorDistanciaSqr)
+                float distanciaSqr = (transform.position - unidadPotencial.transform.position).sqrMagnitude;
+                if (distanciaSqr < menorDistanciaSqr)
                 {
-                    menorDistanciaSqr = distanciaSqrActual;
+                    menorDistanciaSqr = distanciaSqr;
                     enemigoMasCercanoEncontrado = unidadPotencial;
                 }
             }
         }
+
         if (enemigoMasCercanoEncontrado != null)
         {
             Atacar(enemigoMasCercanoEncontrado);

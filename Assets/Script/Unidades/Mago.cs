@@ -1,4 +1,3 @@
-// Mago.cs
 using UnityEngine;
 using UnityEngine.AI;
 using System.Collections;
@@ -53,6 +52,14 @@ public class Mago : Unidad
         }
     }
 
+    protected override void CancelarAccionActual()
+    {
+        base.CancelarAccionActual(); // Llama a la implementación de Unidad (resetea path)
+        objetivoAtaqueActual = null;
+        puntoObjetivoAtaqueSuelo = null;
+        // Si el Mago tuviera otros estados como "estaLanzandoHechizoVisualmente", resetéalos aquí.
+    }
+
     public override void Update()
     {
         base.Update();
@@ -71,6 +78,7 @@ public class Mago : Unidad
             {
                 objetivoAtaqueActual = null;
                 if (navMeshAgent != null && navMeshAgent.hasPath) navMeshAgent.ResetPath();
+                // La lógica de auto-agresión de abajo se activará si puedeAgredirAutomaticamente es true
             }
             else
             {
@@ -134,6 +142,7 @@ public class Mago : Unidad
 
     public override void Atacar(Unidad objetivo)
     {
+        CancelarAccionActual(); // Llamado desde Unidad.Atacar(), pero por claridad si se sobreescribe mucho.
         if (objetivo != null && objetivo.equipoID != this.equipoID && objetivo.vidaActual > 0)
         {
             objetivoAtaqueActual = objetivo;
@@ -147,6 +156,8 @@ public class Mago : Unidad
 
     public override void UsarHabilidadEspecial(int numeroHabilidad, Unidad objetivoUnidad = null, Vector3 posicionObjetivoSuelo = default)
     {
+        // CancelarAccionActual() ya es llamado por Unidad.UsarHabilidadEspecial()
+
         if (numeroHabilidad == 0)
         {
             if (Time.time >= proximoTiempoAtaqueAoE && manaActual >= costoManaAtaqueAoE)
@@ -163,6 +174,7 @@ public class Mago : Unidad
 
                 if (targetPointForAbility.HasValue)
                 {
+                    // CancelarAccionActual() ya se llamó en la base, pero nos aseguramos de limpiar objetivos específicos del Mago
                     objetivoAtaqueActual = null;
                     puntoObjetivoAtaqueSuelo = targetPointForAbility.Value;
 
@@ -205,8 +217,7 @@ public class Mago : Unidad
 
     protected override void Morir()
     {
-        objetivoAtaqueActual = null;
-        puntoObjetivoAtaqueSuelo = null;
+        CancelarAccionActual();
         base.Morir();
     }
 

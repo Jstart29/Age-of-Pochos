@@ -38,7 +38,24 @@ public class Caballero : Unidad
         vidaMaxima = 150f;
         vidaActual = vidaMaxima;
         velocidadMovimiento = 3.0f;
-        if (navMeshAgent != null) navMeshAgent.speed = velocidadMovimiento;
+        if (navMeshAgent != null)
+        {
+            navMeshAgent.speed = velocidadMovimiento;
+        }
+    }
+
+    protected override void CancelarAccionActual()
+    {
+        base.CancelarAccionActual();
+        objetivoAtaqueActual = null;
+        estaCargando = false;
+        estaRetrocediendo = false;
+        StopAllCoroutines();
+
+        if (navMeshAgent != null && navMeshAgent.speed != velocidadMovimiento)
+        {
+            navMeshAgent.speed = velocidadMovimiento;
+        }
     }
 
     public override void Update()
@@ -65,6 +82,7 @@ public class Caballero : Unidad
             {
                 objetivoAtaqueActual = null;
                 if (navMeshAgent != null && navMeshAgent.hasPath) navMeshAgent.ResetPath();
+                if (puedeAgredirAutomaticamente) BuscarSiguienteEnemigoMasCercano(); // Buscar nuevo objetivo
             }
             else
             {
@@ -118,12 +136,12 @@ public class Caballero : Unidad
 
     public override void Atacar(Unidad objetivo)
     {
-        if (estaRetrocediendo || estaCargando) return;
+        CancelarAccionActual(); // Asegura que se cancelen cargas o retrocesos antes de un nuevo objetivo de ataque.
 
         if (objetivo != null && objetivo.vidaActual > 0 && objetivo.equipoID != this.equipoID)
         {
             objetivoAtaqueActual = objetivo;
-            estaCargando = false;
+            // estaCargando = false; // Ya se maneja en CancelarAccionActual
             if (navMeshAgent != null) navMeshAgent.speed = velocidadMovimiento;
         }
         else
@@ -150,6 +168,7 @@ public class Caballero : Unidad
             else
             {
                 proximoTiempoAtaque = Time.time + cooldownAtaque;
+                if (puedeAgredirAutomaticamente) BuscarSiguienteEnemigoMasCercano();
             }
         }
         else
@@ -207,10 +226,7 @@ public class Caballero : Unidad
 
     protected override void Morir()
     {
-        StopAllCoroutines();
-        objetivoAtaqueActual = null;
-        estaCargando = false;
-        estaRetrocediendo = false;
+        CancelarAccionActual(); // Asegurar que se detengan corutinas y estados
         base.Morir();
     }
 
@@ -219,8 +235,9 @@ public class Caballero : Unidad
         if (Time.time < proximoTiempoCarga) return;
         if (estaCargando || estaRetrocediendo) return;
 
+        CancelarAccionActual(); // Cancelar otras acciones antes de cargar
         estaCargando = true;
-        objetivoAtaqueActual = null;
+        // objetivoAtaqueActual = null; 
         if (navMeshAgent != null) navMeshAgent.speed = velocidadCarga;
         MoverA(puntoDestino);
 
@@ -234,6 +251,7 @@ public class Caballero : Unidad
             if (navMeshAgent.pathPending || navMeshAgent.remainingDistance > navMeshAgent.stoppingDistance + 0.1f)
             {
                 navMeshAgent.speed = velocidadMovimiento;
+                // No necesariamente finaliza la carga aquí, solo el boost de velocidad
             }
         }
     }
@@ -258,10 +276,12 @@ public class Caballero : Unidad
             }
         }
         proximoTiempoCarga = Time.time + cooldownCarga;
+        if (navMeshAgent != null && navMeshAgent.hasPath) navMeshAgent.ResetPath(); // Detenerse después de la carga
     }
 
     public override void UsarHabilidadEspecial(int numeroHabilidad, Unidad objetivoUnidad = null, Vector3 posicionObjetivoSuelo = default)
     {
+
         if (estaRetrocediendo) return;
 
         if (numeroHabilidad == 0)
@@ -284,10 +304,6 @@ public class Caballero : Unidad
             {
                 IniciarCargaHacia(puntoDeCarga);
             }
-        }
-        else
-        {
-            base.UsarHabilidadEspecial(numeroHabilidad, objetivoUnidad, posicionObjetivoSuelo);
         }
     }
 
